@@ -2,7 +2,7 @@
 A Go progrom to combine a data export provided by Calimoto, and to convert it into proper GPX files for each trip.
 
 ## Use case
-Get a complete GPX file for a user's trips stored at Calimoto.
+As A user of the Calomoto Service, I would like to have a proper and complete GPX file for my trips, so that I can use them in many other applications subsequently.
 
 GPX download from Calimoto website will contain point data only, lacks the association of points with a timestamp and elevation data. Since recording of GPX points in Calimoto is not done in fixed intervals (duration between points recorded is flexible based on current velocity), the GPX data points can not easily be attributed with a fixed time interval. Also the accuracy of the points recorded is not very precise, witch makes it unfavorable for later addition of height based on a geographic model.
 
