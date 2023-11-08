@@ -6,13 +6,13 @@ Get a complete GPX file for a user's trips stored at Calimoto.
 
 GPX download from Calimoto website will contain point data only, lacks the association of points with a timestamp and elevation data. Since recording of GPX points in Calimoto is not done in fixed intervals (duration between points recorded is flexible based on current velocity), the GPX data points can not easily be attributed with a fixed time interval. Also the accuracy of the points recorded is not very precise, witch makes it unfavorable for later addition of height based on a geographic model.
 
-This renders the GPX files, as they are provided by Calimoto, useless for many past-trip applications, like a map animation rendered by GPX Animator application or Relive.cc.
+This renders the GPX files, as they are downloadable from Calimoto, useless for many past-trip applications, like a map animation rendered by GPX Animator application or Relive.cc.
 
-Calimoto does store all relevant data, however. Personal data may be requested by a service provider, according to German law Art. 15 DSVGO. We asked for the personal data stored, Calimoto provides a data export from their data base for a user. 
+However, Calimoto in fact does store all relevant data. Such personal data may be requested from a service provider, according to German law Art. 15 DSVGO. When asked for the personal data stored, Calimoto provides the user with an export of his personal data from their database. 
 
-Unlike the GPX download offered from the web page, the export provides not only point data but also a number of other metrics, like timestamps and elevations. However, the data is provided as a number of time series database excerpts in JSON format.
+Unlike the GPX downloaded from the web page, the export provides not only point data but also a number of other metrics, like timestamps and elevations for each point. However, the data is stored as a number of time series database excerpts in JSON format (basically as the format provided by mapbox service, which in turn uses aws time series databases for storage).
 
-This Go program converts JSON data in the export into GPX files for each trip.
+This Go program converts the various JSON data sets of the export into a number of GPX files, one for each trip recorded.
 
 ## Usage
 
