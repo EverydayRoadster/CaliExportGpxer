@@ -1,4 +1,4 @@
-module EverydayRoadster/CaliExportGpxer
+module github.com/EverydayRoadster/CaliExportGpxer
 
 go 1.21.3
 
