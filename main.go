@@ -84,8 +84,14 @@ func main(){
 	check(err)
 
 	// create a GPX file for each track
+	names := make(map[string]int)
 	for _,Track := range Tracks {
-		createGpx(Track, dirName)
+		outputName := strings.ReplaceAll(Track.Name, "/", "_")
+		if n, ok := names[strings.ToLower(outputName)]; ok {
+			outputName = fmt.Sprintf("%s - %d", outputName, n+1)
+		}
+		names[strings.ToLower(outputName)]++
+		createGpx(Track, dirName, outputName)
 	}
 }
 
@@ -103,7 +109,7 @@ type Timestamps struct {
 }
 
 // create one track GPX file
-func createGpx(Track TrackData, dirName string){
+func createGpx(Track TrackData, dirName, outputName string){
 	var Gpx gpx.GPX
 
 	// identify track with name, fill meta data 
@@ -116,7 +122,7 @@ func createGpx(Track TrackData, dirName string){
 	Gpx.Time = &startTime
 
 	// create the output gpx file into same folder as source data, use track name for file
-	gpxFile,err := os.Create(dirName + "/" + Gpx.Name + ".gpx")
+	gpxFile,err := os.Create(dirName + "/" + outputName + ".gpx")
 	check(err)
 	defer gpxFile.Close()
 
