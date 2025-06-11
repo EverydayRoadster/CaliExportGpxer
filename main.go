@@ -3,6 +3,8 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"strings"
 	"time"
@@ -25,35 +27,36 @@ func check(e error) {
 type TrackDataRef struct {
 	Type string `json:"__type"`
 	Name string `json:"name"`
-	Iso  string `json:"iso"`
+	Iso  string `json:"iso,omitempty"`
+	Url  string `json:"url,omitempty"`
 }
 
 // track data structure for one track
 type TrackData struct {
-	Distance            int64        `json:"distance"`
-	AltitudeMax         int64        `json:"altitudeMax"`
-	SpeedAverage        float64      `json:"speedAverage"`
-	Language            string       `json:"language"`
+	Distance            float64      `json:"distance,omitempty"`
+	AltitudeMax         float64      `json:"altitudeMax,omitempty"`
+	SpeedAverage        float64      `json:"speedAverage,omitempty"`
+	Language            string       `json:"language,omitempty"`
 	Points              TrackDataRef `json:"points"`
-	Duration            int64        `json:"duration"`
-	RatingRoadCondition int64        `json:"ratingRoadCondition"`
+	Duration            float64      `json:"duration,omitempty"`
+	RatingRoadCondition int64        `json:"ratingRoadCondition,omitempty"`
 	Altitudes           TrackDataRef `json:"altitudes"`
 	TimeCreated         TrackDataRef `json:"timeCreated"`
 	Speeds              TrackDataRef `json:"speeds"`
 	Image               TrackDataRef `json:"image"`
-	AltitudeIncline     int64        `json:"altitudeIncline"`
-	SpeedMax            float64      `json:"speedMax"`
+	AltitudeIncline     float64      `json:"altitudeIncline,omitempty"`
+	SpeedMax            float64      `json:"speedMax,omitempty"`
 	Preview200          TrackDataRef `json:"preview200"`
 	Timestamps          TrackDataRef `json:"dates"`
-	RatingFun           int64        `json:"ratingFun"`
-	AltitudeDecline     int64        `json:"altitudeDecline"`
-	Tags                []string     `json:"tags"`
+	RatingFun           int64        `json:"ratingFun,omitempty"`
+	AltitudeDecline     float64      `json:"altitudeDecline,omitempty"`
+	Tags                []string     `json:"tags,omitempty"`
 	Preview400          TrackDataRef `json:"preview400"`
-	RatingScenery       int64        `json:"ratingScenery"`
+	RatingScenery       int64        `json:"ratingScenery,omitempty"`
 	Name                string       `json:"name"`
-	Comment             string       `json:"comment"`
-	AltitudeMin         int64        `json:"altitudeMin"`
-	TourFeed            bool         `json:"tourFeed"`
+	Comment             string       `json:"comment,omitempty"`
+	AltitudeMin         float64      `json:"altitudeMin,omitempty"`
+	TourFeed            bool         `json:"tourFeed,omitempty"`
 }
 
 // default empty author name
@@ -96,12 +99,45 @@ type Points struct {
 
 // elevations JSON read structure
 type Elevations struct {
-	Elevations []int64 `json:"altitudes"`
+	Elevations []float64 `json:"altitudes"`
 }
 
 // timestamps JSON read structure
 type Timestamps struct {
 	Timestamps []int64 `json:"dates"`
+}
+
+func loadJson(dirName string, fileName string, uri string) error {
+	if len(strings.Trim(uri, " ")) <= 0 {
+		return nil
+	}
+	// Make HTTP GET request
+	resp, err := http.Get(uri)
+	if err != nil {
+		return fmt.Errorf("failed to fetch the file: %w", err)
+	}
+	defer resp.Body.Close()
+
+	// Check for HTTP errors
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("bad status: %s", resp.Status)
+	}
+
+	// Create the local file
+	out, err := os.Create(dirName + "/" + fileName)
+	if err != nil {
+		return fmt.Errorf("failed to create file: %w", err)
+	}
+	defer out.Close()
+
+	// Write the response body to file
+	_, err = io.Copy(out, resp.Body)
+	if err != nil {
+		return fmt.Errorf("failed to write file: %w", err)
+	}
+
+	fmt.Printf("JSON file saved as %s\n", fileName)
+	return nil
 }
 
 // replacer for potentially unsafe characters in file names
@@ -128,6 +164,8 @@ func createGpx(Track TrackData, dirName string) {
 	defer gpxFile.Close()
 
 	// read points from points JSON file
+	err = loadJson(dirName, Track.Points.Name, Track.Points.Url)
+	check(err)
 	pointsFile, err := os.ReadFile(dirName + "/" + Track.Points.Name)
 	check(err)
 	var points Points
@@ -135,6 +173,8 @@ func createGpx(Track TrackData, dirName string) {
 	check(err)
 
 	// read elevations from elevations JSON file
+	err = loadJson(dirName, Track.Altitudes.Name, Track.Altitudes.Url)
+	check(err)
 	elevationsFile, err := os.ReadFile(dirName + "/" + Track.Altitudes.Name)
 	check(err)
 	var elevations Elevations
@@ -142,6 +182,8 @@ func createGpx(Track TrackData, dirName string) {
 	check(err)
 
 	// read timestamps from timestamps JSON file
+	err = loadJson(dirName, Track.Timestamps.Name, Track.Timestamps.Url)
+	check(err)
 	timestampsFile, err := os.ReadFile(dirName + "/" + Track.Timestamps.Name)
 	check(err)
 	var timestamps Timestamps
