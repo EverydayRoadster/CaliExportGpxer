@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/flytam/filenamify"
 	"github.com/tkrajina/gpxgo/gpx"
 )
 
@@ -142,12 +143,9 @@ func loadJson(dirName string, fileName string, uri string) error {
 		return fmt.Errorf("failed to write file: %w", err)
 	}
 
-	//	fmt.Printf("JSON file saved as %s\n", fileName)
+	fmt.Printf("JSON file saved as %s\n", fileName)
 	return nil
 }
-
-// replacer for potentially unsafe characters in file names
-var fsReplacer = strings.NewReplacer("/", "-", "\\", "-", ":", "-")
 
 // create one track GPX file
 func createGpx(Track TrackData, dirName string) {
@@ -163,7 +161,11 @@ func createGpx(Track TrackData, dirName string) {
 
 	// create the output gpx file into same folder as source data, use track name for file
 	// fix names to comply with file system semantics
-	outputGPXfilename := fsReplacer.Replace(startTime.Format(time.RFC3339) + " " + Gpx.Name + ".gpx")
+	outputGPXfilename, err := filenamify.Filenamify(startTime.Format(time.RFC3339)+" "+Gpx.Name+".gpx", filenamify.Options{
+		Replacement: "-",
+	})
+	check(err)
+
 	gpxFile, err := os.Create(dirName + "/" + outputGPXfilename)
 	check(err)
 	fmt.Println(outputGPXfilename)
