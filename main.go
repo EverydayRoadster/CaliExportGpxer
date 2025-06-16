@@ -111,6 +111,12 @@ func loadJson(dirName string, fileName string, uri string) error {
 	if len(strings.Trim(uri, " ")) <= 0 {
 		return nil
 	}
+	// check if file is already present, ship downloading in case
+	info, err := os.Stat(dirName + "/" + fileName)
+	if info != nil || os.IsExist(err) {
+		return nil
+	}
+
 	// Make HTTP GET request
 	resp, err := http.Get(uri)
 	if err != nil {
@@ -136,7 +142,7 @@ func loadJson(dirName string, fileName string, uri string) error {
 		return fmt.Errorf("failed to write file: %w", err)
 	}
 
-	fmt.Printf("JSON file saved as %s\n", fileName)
+	//	fmt.Printf("JSON file saved as %s\n", fileName)
 	return nil
 }
 
@@ -171,6 +177,7 @@ func createGpx(Track TrackData, dirName string) {
 	var points Points
 	err = json.Unmarshal(pointsFile, &points)
 	check(err)
+	numPoints := len(points.Points)
 
 	// read elevations from elevations JSON file
 	err = loadJson(dirName, Track.Altitudes.Name, Track.Altitudes.Url)
@@ -180,6 +187,7 @@ func createGpx(Track TrackData, dirName string) {
 	var elevations Elevations
 	err = json.Unmarshal(elevationsFile, &elevations)
 	check(err)
+	numElevations := len(elevations.Elevations)
 
 	// read timestamps from timestamps JSON file
 	err = loadJson(dirName, Track.Timestamps.Name, Track.Timestamps.Url)
@@ -189,6 +197,13 @@ func createGpx(Track TrackData, dirName string) {
 	var timestamps Timestamps
 	err = json.Unmarshal(timestampsFile, &timestamps)
 	check(err)
+	numTimestamps := len(timestamps.Timestamps)
+
+	if numPoints == numElevations && numPoints == numTimestamps {
+		// all array are of same length
+	} else {
+		fmt.Printf("WARNING: Calimoto data size of your track not consistent for %s counting %s trackpoints: % d, %s elevations: %d, %s timestamps: %d . The GPX may represent your trip less accuratly, the bigger the difference is.", outputGPXfilename, Track.Points.Name, numPoints, Track.Altitudes.Name, numElevations, Track.Timestamps.Name, numTimestamps)
+	}
 
 	// number of points from number read in points JSON file, dimensions for elevation and timestamps are to be the same
 	gpxPoints := make([]gpx.GPXPoint, len(points.Points))
@@ -197,8 +212,12 @@ func createGpx(Track TrackData, dirName string) {
 	for i := range gpxPoints {
 		gpxPoints[i].Point.Latitude = points.Points[i][0]
 		gpxPoints[i].Point.Longitude = points.Points[i][1]
-		gpxPoints[i].Point.Elevation = *gpx.NewNullableFloat64(float64(elevations.Elevations[i]))
-		gpxPoints[i].Timestamp = startTime.Add(time.Millisecond * time.Duration(timestamps.Timestamps[i]))
+		if i < numElevations {
+			gpxPoints[i].Point.Elevation = *gpx.NewNullableFloat64(float64(elevations.Elevations[i]))
+		}
+		if i < numTimestamps {
+			gpxPoints[i].Timestamp = startTime.Add(time.Millisecond * time.Duration(timestamps.Timestamps[i]))
+		}
 	}
 
 	// create a Track segment and set all points into it
